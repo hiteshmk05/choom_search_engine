@@ -22,3 +22,9 @@ int ConcurrentQueue::size() {
     std::lock_guard<std::mutex> lock(mutex_);
     return queue_.size();
 }
+
+void ConcurrentQueue::clear() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::queue<std::string> empty;
+    std::swap(queue_, empty);
+}

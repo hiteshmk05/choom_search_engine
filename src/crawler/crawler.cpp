@@ -105,6 +105,13 @@ Crawler::Crawler(int num_threads, const std::string& db_path)
 Crawler::~Crawler() {}
 
 void Crawler::start(const std::string& seed_url) {
+    
+    url_queue_.clear();
+    {
+        std::lock_guard<std::mutex> lock(visited_mutex_);
+        visited_urls_cache_.clear();
+    }
+    threads_.clear();
     base_hostname_ = get_hostname(seed_url);
     if (base_hostname_.empty()) {
         std::cerr << "Invalid seed URL provided." << std::endl;
@@ -133,6 +140,7 @@ void Crawler::worker_thread() {
         {
             std::lock_guard<std::mutex> lock(visited_mutex_);
             if (visited_urls_cache_.size() > 200) {
+                url_queue_.clear();
                 break;
             }
         }

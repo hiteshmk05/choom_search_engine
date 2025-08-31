@@ -21,7 +21,7 @@ bool Indexer::start_crawl(const std::string& seed_url) {
         crawler_->start(seed_url);
         
         std::cout << "[INDEXER] Crawl finished for seed: " << seed_url << std::endl;
-        is_crawling_ = false;
+        is_crawling_.store(false);
     });
     crawl_thread.detach();
 

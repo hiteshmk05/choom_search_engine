@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choom Search</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 800px; margin: 40px auto; color: #333; }
+        h1 { color: #1a0dab; }
+        .search-container { display: flex; margin-bottom: 2rem; }
+        #searchInput { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px 0 0 20px; font-size: 16px; }
+        #searchButton { padding: 10px 20px; border: 1px solid #1a0dab; background-color: #1a0dab; color: white; font-size: 16px; border-radius: 0 20px 20px 0; cursor: pointer; }
+        #results { list-style-type: none; padding-left: 0; }
+        #results li { margin-bottom: 1.5rem; }
+        #results a { text-decoration: none; color: #1a0dab; font-size: 18px; }
+        #results a:hover { text-decoration: underline; }
+        #results .url-display { font-size: 14px; color: #006621; }
+        #results .score { font-size: 12px; color: #70757a; }
+        .status-message { color: #555; }
+    </style>
+</head>
+<body>
+
+    <h1>Choom Search Engine</h1>
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Enter your query...">
+        <button id="searchButton">Search</button>
+    </div>
+    
+    <ul id="results">
+        <!-- Search results will be dynamically inserted here -->
+    </ul>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const resultsList = document.getElementById('results');
+
+        // This is the core function that talks to your C++ backend
+        async function performSearch() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            resultsList.innerHTML = '<li class="status-message">Searching...</li>';
+
+            try {
+                // The API call to your running C++ search_server.exe
+                const response = await fetch(`http://localhost:8080/search?q=${encodeURIComponent(query)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const results = await response.json(); // Parse the JSON from C++
+
+                resultsList.innerHTML = ''; // Clear the "Searching..." message
+
+                if (results.length === 0) {
+                    resultsList.innerHTML = '<li class="status-message">No results found.</li>';
+                } else {
+                    // Loop through the JSON array and create HTML for each result
+                    results.forEach(result => {
+                        const listItem = document.createElement('li');
+                        
+                        const link = document.createElement('a');
+                        link.href = result.url;
+                        link.textContent = result.url; // In a real engine, you'd show a title here
+                        link.target = "_blank"; // Open in a new tab
+                        
+                        const urlDisplay = document.createElement('div');
+                        urlDisplay.className = 'url-display';
+                        urlDisplay.textContent = result.url;
+                        
+                        const scoreDiv = document.createElement('div');
+                        scoreDiv.className = 'score';
+                        // We will add the score when the Ranker is implemented
+                        // scoreDiv.textContent = `Relevance Score: ${result.score.toFixed(4)}`;
+
+                        listItem.appendChild(link);
+                        listItem.appendChild(urlDisplay);
+                        // listItem.appendChild(scoreDiv);
+                        resultsList.appendChild(listItem);
+                    });
+                }
+            } catch (error) {
+                resultsList.innerHTML = `<li class="status-message">Error: ${error.message}. Is the C++ search server running?</li>`;
+                console.error('Search failed:', error);
+            }
+        }
+
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        });
+    </script>
+</body>
+</html>

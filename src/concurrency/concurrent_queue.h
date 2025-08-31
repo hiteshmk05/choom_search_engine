@@ -14,6 +14,7 @@ public:
     void push(const std::string& url);
     std::string pop();
     int size();
+    void clear();
 
 private:
     std::queue<std::string> queue_;
